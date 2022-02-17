@@ -26,6 +26,16 @@ OPT_FILE = "opt_librispeech_prepare.pkl"
 SAMPLERATE = 16000
 
 
+def load_speaker_mapping(speakers_file):
+    mapping = {}
+    for row in open(speakers_file).readlines():
+        row = row.strip()
+        if row.startswith(";"):
+            continue
+        columns = [col.strip() for col in row.split("|")]
+        mapping[columns[0]] = columns[1]
+    return mapping
+
 def prepare_librispeech(
     data_folder,
     save_folder,
@@ -107,6 +117,9 @@ def prepare_librispeech(
     # Additional checks to make sure the data folder contains Librispeech
     check_librispeech_folders(data_folder, splits)
 
+    speaker_mapping = load_speaker_mapping(os.path.join(data_folder, "SPEAKERS.TXT"))
+
+
     # create csv files for each split
     all_texts = {}
     for split_index in range(len(splits)):
@@ -130,7 +143,7 @@ def prepare_librispeech(
             n_sentences = len(wav_lst)
 
         create_csv(
-            save_folder, wav_lst, text_dict, split, n_sentences,
+            save_folder, wav_lst, text_dict, split, speaker_mapping, n_sentences,
         )
 
     # Merging csv file if needed
@@ -260,7 +273,7 @@ def split_lexicon(data_folder, split_ratio):
 
 
 def create_csv(
-    save_folder, wav_lst, text_dict, split, select_n_sentences,
+    save_folder, wav_lst, text_dict, split, speaker_mapping, select_n_sentences,
 ):
     """
     Create the dataset csv file given a list of wav files.
@@ -289,7 +302,7 @@ def create_csv(
     msg = "Creating csv lists in  %s..." % (csv_file)
     logger.info(msg)
 
-    csv_lines = [["ID", "duration", "wav", "spk_id", "wrd"]]
+    csv_lines = [["ID", "duration", "wav", "spk_id", "gender", "wrd"]]
 
     snt_cnt = 0
     # Processing all the wav files in wav_lst
@@ -303,11 +316,15 @@ def create_csv(
         signal = signal.squeeze(0)
         duration = signal.shape[0] / SAMPLERATE
 
+        speaker_string = spk_id.split('-')[0]
+        speaker_gender = speaker_mapping[speaker_string]
+
         csv_line = [
             snt_id,
             str(duration),
             wav_file,
             spk_id,
+            speaker_gender,
             str(" ".join(wrds.split("_"))),
         ]
 
