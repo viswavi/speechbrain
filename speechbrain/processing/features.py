@@ -1106,15 +1106,12 @@ class InputNormalization(torch.nn.Module):
                                                 1 - self.weight
                                         ) * self.glob_std + self.weight * current_std
 
-                    # self.glob_mean.detach()
-                    # self.glob_std.detach()
+                    self.glob_mean.detach()
+                    self.glob_std.detach()
 
                     self.count = self.count + 1
-                x_sub_mean = x - self.glob_mean.data.to(x.device)
-                x_std = self.glob_std.data.to(x.device)
 
-                x = x_sub_mean
-                # x = (x - self.glob_mean.data.to(x.device)) / (self.glob_std.data.to(x.device))
+                x = (x - self.glob_mean.data.to(x.device)) / (self.glob_std.data.to(x.device))
 
         return x
 
