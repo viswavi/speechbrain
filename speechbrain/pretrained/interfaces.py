@@ -759,6 +759,16 @@ class EncoderClassifier(Pretrained):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def encode_batch_feat(self, feats, wav_lens, normalize=False):
+        # Computing features and embeddings
+        feats = self.mods.mean_var_norm(feats, wav_lens)
+        embeddings = self.mods.embedding_model(feats, wav_lens)
+        if normalize:
+            embeddings = self.hparams.mean_var_norm_emb(
+                embeddings, torch.ones(embeddings.shape[0], device=self.device)
+            )
+        return embeddings
+
     def encode_batch(self, wavs, wav_lens=None, normalize=False):
         """Encodes the input audio into a single vector embedding.
 
@@ -808,6 +818,12 @@ class EncoderClassifier(Pretrained):
             )
         return embeddings
 
+    def classify_batch_feats(self, feat, wav_lens):
+        emb = self.encode_batch_feat(feat, wav_lens)
+        out_prob = self.mods.classifier(emb).squeeze(1)
+        score, index = torch.max(out_prob, dim=-1)
+        return out_prob, score, index
+
     def classify_batch(self, wavs, wav_lens=None):
         """Performs classification on the top of the encoded features.
 
@@ -840,8 +856,8 @@ class EncoderClassifier(Pretrained):
         emb = self.encode_batch(wavs, wav_lens)
         out_prob = self.mods.classifier(emb).squeeze(1)
         score, index = torch.max(out_prob, dim=-1)
-        text_lab = self.hparams.label_encoder.decode_torch(index)
-        return out_prob, score, index, text_lab
+        # text_lab = self.hparams.label_encoder.decode_torch(index)
+        return out_prob, score, index, None
 
     def classify_file(self, path):
         """Classifies the given audiofile into the given set of labels.
