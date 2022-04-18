@@ -761,7 +761,11 @@ class EncoderClassifier(Pretrained):
 
     def encode_batch_feat(self, feats, wav_lens, normalize=False):
         # Computing features and embeddings
-        feats = self.mods.mean_var_norm(feats, wav_lens)
+        # Assign full length if wav_lens is not assigned
+        if wav_lens is None:
+            wav_lens = torch.ones(feats.shape[0], device=self.device)
+
+        # feats = self.mods.mean_var_norm(feats, wav_lens) # feats are already normalized?
         embeddings = self.mods.embedding_model(feats, wav_lens)
         if normalize:
             embeddings = self.hparams.mean_var_norm_emb(
@@ -810,7 +814,7 @@ class EncoderClassifier(Pretrained):
 
         # Computing features and embeddings
         feats = self.mods.compute_features(wavs)
-        feats = self.mods.mean_var_norm(feats, wav_lens)
+        # feats = self.mods.mean_var_norm(feats, wav_lens)
         embeddings = self.mods.embedding_model(feats, wav_lens)
         if normalize:
             embeddings = self.hparams.mean_var_norm_emb(
@@ -818,7 +822,7 @@ class EncoderClassifier(Pretrained):
             )
         return embeddings
 
-    def classify_batch_feats(self, feat, wav_lens):
+    def classify_batch_feats(self, feat, wav_lens=None):
         emb = self.encode_batch_feat(feat, wav_lens)
         out_prob = self.mods.classifier(emb).squeeze(1)
         score, index = torch.max(out_prob, dim=-1)

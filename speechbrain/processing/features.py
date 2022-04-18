@@ -1082,6 +1082,7 @@ class InputNormalization(torch.nn.Module):
             current_mean = torch.mean(torch.stack(current_means), dim=0)
             current_std = torch.mean(torch.stack(current_stds), dim=0)
 
+
             if self.norm_type == "batch":
                 x = (x - current_mean.data) / (current_std.data)
 
