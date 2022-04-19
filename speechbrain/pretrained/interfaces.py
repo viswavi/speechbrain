@@ -765,7 +765,7 @@ class EncoderClassifier(Pretrained):
         if wav_lens is None:
             wav_lens = torch.ones(feats.shape[0], device=self.device)
 
-        # feats = self.mods.mean_var_norm(feats, wav_lens) # feats are already normalized?
+        # feats are already normalized
         embeddings = self.mods.embedding_model(feats, wav_lens)
         if normalize:
             embeddings = self.hparams.mean_var_norm_emb(
@@ -809,12 +809,12 @@ class EncoderClassifier(Pretrained):
             wav_lens = torch.ones(wavs.shape[0], device=self.device)
 
         # Storing waveform in the specified device
-        wavs, wav_lens = wavs.to(self.device), wav_lens.to(self.device)
-        wavs = wavs.float()
+        #wavs, wav_lens = wavs.to(self.device), wav_lens.to(self.device)
+        #wavs = wavs.float()
 
         # Computing features and embeddings
         feats = self.mods.compute_features(wavs)
-        # feats = self.mods.mean_var_norm(feats, wav_lens)
+        feats = self.mods.mean_var_norm(feats, wav_lens)
         embeddings = self.mods.embedding_model(feats, wav_lens)
         if normalize:
             embeddings = self.hparams.mean_var_norm_emb(
