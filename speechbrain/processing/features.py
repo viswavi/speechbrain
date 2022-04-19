@@ -1113,7 +1113,7 @@ class InputNormalization(torch.nn.Module):
 
                 if self.glob_mean.data.shape[0] == 1 and not torch.is_nonzero(self.glob_mean.data):
                     self.glob_mean = current_mean
-                if self.glob_std.data.shape[0] == 1 and torch.is_nonzero(self.glob_std.data):
+                if self.glob_std.data.shape[0] == 1 and not torch.is_nonzero(self.glob_std.data):
                     self.glob_std = current_std
 
                 x = (x - self.glob_mean.data.to(x.device)) / (self.glob_std.data.to(x.device))
